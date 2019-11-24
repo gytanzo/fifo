@@ -24,15 +24,15 @@ typedef struct CSE_Semaphore *CSE_Semaphore;
  * an error, etc.) */
 CSE_Semaphore csesem_create(int count);
 
-/* Post on a CSE_Semaphore.  This will increase the count on the
- * semaphore, and notify a waiting task if any such task exists. */
-void csesem_post(CSE_Semaphore sem);
-
 /* Wait on a CSE_Semaphore.  If the count on this semaphore is greater
  * than zero, it will decrement the count and return immediately.  If it
  * is zero, it will wait until it it is greater than zero, then
  * decrement the count and return. */
 void csesem_wait(CSE_Semaphore sem);
+
+/* Post on a CSE_Semaphore.  This will increase the count on the
+ * semaphore, and notify a waiting task if any such task exists. */
+void csesem_post(CSE_Semaphore sem);
 
 /* Destroy a CSE_Semaphore, releasing any resources it may be using.
  * After calling this function, any access to the semaphore is an
