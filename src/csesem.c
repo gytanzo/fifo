@@ -14,7 +14,6 @@
 struct CSE_Semaphore {
     int value;
     pthread_mutex_t mutex;
-    pthread_cond_t entered;
     pthread_cond_t done;
 };
 
@@ -50,7 +49,7 @@ void csesem_wait(CSE_Semaphore sem) {
     pthread_mutex_t *mutex = &(sem -> mutex);
     pthread_cond_t *done = &(sem -> done);
 
-    if (*value > 0){
+    if (*value != 0){
         *value = *value - 1;
         return;
     }
@@ -60,19 +59,19 @@ void csesem_wait(CSE_Semaphore sem) {
             pthread_cond_wait(done, mutex);
         }
         pthread_mutex_unlock(mutex);
+        *value = *value - 1;
         return;
     }
 }
 
 void csesem_post(CSE_Semaphore sem) {
     int *value = &(sem -> value);
-    pthread_cond_t *done = &(sem -> done);
     pthread_mutex_t *mutex = &(sem -> mutex);
+    pthread_cond_t *done = &(sem -> done);
 
-    if (!mutex){
-        ;
-    }
+    pthread_mutex_lock(mutex);
     *value = *value + 1;
+    pthread_mutex_unlock(mutex);
     pthread_cond_signal(done);
 }
 
