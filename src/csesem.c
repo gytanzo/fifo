@@ -50,7 +50,9 @@ void csesem_wait(CSE_Semaphore sem) {
     pthread_cond_t *done = &(sem -> done);
 
     if (*value != 0){
+        pthread_mutex_lock(mutex);
         *value = *value - 1;
+        pthread_mutex_unlock(mutex);
         return;
     }
     else {
@@ -58,8 +60,8 @@ void csesem_wait(CSE_Semaphore sem) {
         while (*value == 0){
             pthread_cond_wait(done, mutex);
         }
-        pthread_mutex_unlock(mutex);
         *value = *value - 1;
+        pthread_mutex_unlock(mutex);
         return;
     }
 }

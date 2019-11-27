@@ -5,7 +5,7 @@
 
 #include "../src/csesem.h"
 
-#define THREADS 5
+#define THREADS 10000
 
 CSE_Semaphore sem;
 

@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     if (value == COUNT * THREADS + OFFSET) {
         printf("passed\n");
     } else {
-        printf("failed\n");
+        printf("%s%d%s%d\n", "failed: value is ", value, " instead of ", COUNT * THREADS + OFFSET);
         return 1;
     }
 
