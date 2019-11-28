@@ -49,29 +49,17 @@ void csesem_wait(CSE_Semaphore sem) {
     pthread_mutex_t *mutex = &(sem -> mutex);
     pthread_cond_t *done = &(sem -> done);
 
+    pthread_mutex_lock(mutex);
     if (*value !=  0){
-        pthread_mutex_lock(mutex);
-        if (*value != 0){
-            *value = *value - 1;
-        }
-        else {
-            while (*value == 0){
-                pthread_cond_wait(done, mutex);
-            }
-            *value = *value - 1;
-        }
-        pthread_mutex_unlock(mutex);
-        return;
+        *value = *value - 1;
     }
     else {
-        pthread_mutex_lock(mutex);
         while (*value == 0){
             pthread_cond_wait(done, mutex);
         }
         *value = *value - 1;
-        pthread_mutex_unlock(mutex);
-        return;
     }
+    pthread_mutex_unlock(mutex);
 }
 
 void csesem_post(CSE_Semaphore sem) {
