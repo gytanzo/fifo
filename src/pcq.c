@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "csesem.h"
 #include "pcq.h"
@@ -8,20 +9,59 @@
  * PCQueue.  The given definition is ABSOLUTELY NOT COMPLETE.  You will
  * have to add several items to this structure. */
 struct PCQueue {
-    int slots;
     void **queue;
+    int slots;
+    void *first;
+    void *last;
+    CSE_Semaphore mutex;
+    CSE_Semaphore open;
+    CSE_Semaphore items;
 };
 
 /* The given implementation performs no error checking and simply
  * allocates the queue itself.  You will have to create and initialize
  * (appropriately) semaphores, mutexes, condition variables, flags,
  * etc. in this function. */
-PCQueue pcq_create(int slots) {
+PCQueue pcq_create(int n) {
     PCQueue pcq;
-
     pcq = calloc(1, sizeof(*pcq));
-    pcq->queue = calloc(slots, sizeof(void *));
-    pcq->slots = slots;
+
+    void ***queue = &(pcq -> queue);
+    int *slots = &(pcq -> slots);
+    void **first = &(pcq -> first);
+    void **last = &(pcq -> last);
+    CSE_Semaphore *mutex = &(pcq -> mutex);
+    CSE_Semaphore *open = &(pcq -> open);
+    CSE_Semaphore *items = &(pcq -> items);
+
+    *queue = calloc(n, sizeof(void *));
+    *slots = n;
+    *first = *last = 0;
+    *mutex = csesem_create(1);
+    *open = csesem_create(n);
+    *items = csesem_create(0);
+
+    int check_one = (*queue != NULL);
+    int check_two = (*mutex != NULL);
+    int check_three = (*open != NULL);
+    int check_four = (*items != NULL);
+
+    if ((check_one && check_two && check_three && check_four) != 1){
+       puts("ERR: An initialization function failed. Check below.");
+       if (check_one == 0){
+           puts("*queue initialization failed.");
+       }
+       if (check_two == 0){
+           puts("*mutex initialization failed.");
+       }
+       if (check_three == 0){
+           puts("*open initialization failed.");
+       }
+       if (check_four == 0){
+           puts("*items initialization failed.");
+       }
+       return NULL;
+    }
 
     return pcq;
 }
