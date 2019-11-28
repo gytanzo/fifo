@@ -5,7 +5,7 @@
 
 #include "../src/csesem.h"
 
-#define THREADS 10000
+#define THREADS 1000
 
 CSE_Semaphore sem;
 
@@ -41,13 +41,13 @@ void *test_thread(void *data) {
 }
 
 int main(int argc, char *argv[])
-{
+{ 
     pthread_t t[THREADS];
     int result;
 
     /* Configure the first THREADS - 1 threads to enter immediately. */
     sem = csesem_create(THREADS - 1);
-
+    
     /* Create the lock and condition variables */
     if ((result = pthread_mutex_init(&lock, NULL)) != 0) {
         fprintf(stderr, "pthread_mutex_init: %s\n", strerror(result));
