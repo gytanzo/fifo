@@ -44,7 +44,7 @@ CSE_Semaphore csesem_create(int count) {
     return sem;
 }
 
-void csesem_wait(CSE_Semaphore sem) {
+void csesem_wait(CSE_Semaphore sem) { /* P(s) */
     int *value = &(sem -> value);
     pthread_mutex_t *mutex = &(sem -> mutex);
     pthread_cond_t *done = &(sem -> done);
@@ -62,7 +62,7 @@ void csesem_wait(CSE_Semaphore sem) {
     pthread_mutex_unlock(mutex);
 }
 
-void csesem_post(CSE_Semaphore sem) {
+void csesem_post(CSE_Semaphore sem) { /* V(s) */
     int *value = &(sem -> value);
     pthread_mutex_t *mutex = &(sem -> mutex);
     pthread_cond_t *done = &(sem -> done);

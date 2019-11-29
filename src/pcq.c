@@ -1,6 +1,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <stdint.h>
 
 #include "csesem.h"
 #include "pcq.h"
@@ -11,8 +13,7 @@
 struct PCQueue {
     void **queue;
     int slots;
-    void *first;
-    void *last;
+    int available;
     CSE_Semaphore mutex;
     CSE_Semaphore open;
     CSE_Semaphore items;
@@ -23,20 +24,17 @@ struct PCQueue {
  * (appropriately) semaphores, mutexes, condition variables, flags,
  * etc. in this function. */
 PCQueue pcq_create(int n) {
-    PCQueue pcq;
-    pcq = calloc(1, sizeof(*pcq));
+    PCQueue pcq = calloc(1, sizeof(*pcq));
 
     void ***queue = &(pcq -> queue);
     int *slots = &(pcq -> slots);
-    void **first = &(pcq -> first);
-    void **last = &(pcq -> last);
+    int *available = &(pcq -> available);
     CSE_Semaphore *mutex = &(pcq -> mutex);
     CSE_Semaphore *open = &(pcq -> open);
     CSE_Semaphore *items = &(pcq -> items);
 
     *queue = calloc(n, sizeof(void *));
-    *slots = n;
-    *first = *last = 0;
+    *slots = *available = n;;
     *mutex = csesem_create(1);
     *open = csesem_create(n);
     *items = csesem_create(0);
@@ -66,16 +64,57 @@ PCQueue pcq_create(int n) {
     return pcq;
 }
 
-/* This implementation does nothing, as there is not enough information
- * in the given struct PCQueue to even usefully insert a pointer into
- * the data structure. */
 void pcq_insert(PCQueue pcq, void *data) {
+    csesem_wait(pcq->open);
+    csesem_wait(pcq->mutex);
+
+    int *slots = &(pcq -> slots);
+    int *available = &(pcq -> available);
+
+    if (*available == *slots){
+        int index = *slots - *available;
+        pcq->queue[index] = data;
+        *available = *available - 1;
+    }
+
+    else {
+        if (*available >= 1){
+            int index = *slots - *available;
+            pcq->queue[index] = data;
+            *available = *available - 1;
+        }
+    }
+
+    csesem_post(pcq->mutex);
+    csesem_post(pcq->items);
 }
 
-/* This implementation does nothing, for the same reason as
- * pcq_insert(). */
-void *pcq_retrieve(PCQueue pcq) {
-    return NULL;
+void *pcq_retrieve(PCQueue pcq) { 
+    csesem_wait(pcq->items);
+    csesem_wait(pcq->mutex);
+
+    int *slots = &(pcq -> slots);
+    int *available = &(pcq -> available);
+    int index = 0;
+    void *data = NULL;
+
+    data = pcq->queue[0];
+    *available = *available + 1;
+
+    while (index != *slots){
+        if (index + 1 != *slots){
+            pcq->queue[index] = pcq->queue[index + 1];
+        }
+        else {
+            pcq->queue[index] = NULL;
+        }
+        index++;
+    }
+    
+    csesem_post(pcq->mutex);
+    csesem_post(pcq->open);
+    
+    return data;
 }
 
 /* The given implementation blindly frees the queue.  A minimal
@@ -90,6 +129,8 @@ void *pcq_retrieve(PCQueue pcq) {
  * at once!
  */
 void pcq_destroy(PCQueue pcq) {
-    free(pcq->queue);
+    void ***queue = &(pcq -> queue);
+
+    free(*queue);
     free(pcq);
 }
