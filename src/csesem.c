@@ -73,9 +73,14 @@ void csesem_post(CSE_Semaphore sem) { /* V(s) */
     pthread_cond_signal(done);
 }
 
-
 /* This function should destroy any resources allocated for this
  * semaphore; this includes mutexes or condition variables. */
 void csesem_destroy(CSE_Semaphore sem) {
+    pthread_mutex_t *mutex = &(sem -> mutex);
+    pthread_cond_t *done = &(sem -> done);
+    
+    pthread_cond_destroy(done);
+    pthread_mutex_destroy(mutex);
+    
     free(sem);
 }

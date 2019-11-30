@@ -2,14 +2,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <stdint.h>
+#include <stdbool.h>
 
 #include "csesem.h"
 #include "pcq.h"
 
-/* This structure must contain everything you need for an instance of a
- * PCQueue.  The given definition is ABSOLUTELY NOT COMPLETE.  You will
- * have to add several items to this structure. */
 struct PCQueue {
     void **queue;
     int slots;
@@ -19,10 +16,6 @@ struct PCQueue {
     CSE_Semaphore items;
 };
 
-/* The given implementation performs no error checking and simply
- * allocates the queue itself.  You will have to create and initialize
- * (appropriately) semaphores, mutexes, condition variables, flags,
- * etc. in this function. */
 PCQueue pcq_create(int n) {
     PCQueue pcq = calloc(1, sizeof(*pcq));
 
@@ -34,7 +27,7 @@ PCQueue pcq_create(int n) {
     CSE_Semaphore *items = &(pcq -> items);
 
     *queue = calloc(n, sizeof(void *));
-    *slots = *available = n;;
+    *slots = *available = n;
     *mutex = csesem_create(1);
     *open = csesem_create(n);
     *items = csesem_create(0);
@@ -128,9 +121,12 @@ void *pcq_retrieve(PCQueue pcq) {
  * intertwined with teardown and you don't want to be debugging it all
  * at once!
  */
-void pcq_destroy(PCQueue pcq) {
-    void ***queue = &(pcq -> queue);
 
-    free(*queue);
+void pcq_destroy(PCQueue pcq) {
+    csesem_destroy(pcq->items);
+    csesem_destroy(pcq->mutex);
+    csesem_destroy(pcq->open);
+
+    free(pcq->queue);
     free(pcq);
 }
